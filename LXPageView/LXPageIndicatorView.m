@@ -104,7 +104,7 @@ static const CGFloat kLineHeight = 2.f;
     
     if (hollowCircleWidth > 0) {
         _hollowCircleWidth = hollowCircleWidth;
-        [UIView animateWithDuration:1. animations:^{
+        [UIView animateWithDuration:1.f animations:^{
             [self setNeedsDisplay];
         }];
     }

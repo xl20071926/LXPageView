@@ -24,5 +24,4 @@ typedef NS_ENUM(NSInteger, PageIndicatorViewStyle) {
 
 - (instancetype)initWithFrame:(CGRect)frame indicatorStyle:(PageIndicatorViewStyle)style;
 
-
 @end
