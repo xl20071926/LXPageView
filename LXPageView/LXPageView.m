@@ -14,8 +14,9 @@ static const CGFloat kIndicatorViewSize = 6.f;
 static const CGFloat kIndicatorViewSpace = 5.f;
 static const CGFloat kAnimationDuration = 0.6;
 static const NSInteger kTag = 555;
+#define degreesToRadians(x) (M_PI*(x)/180.0)
 
-@interface LXPageView ()
+@interface LXPageView () <CAAnimationDelegate>
 
 @property (nonatomic, assign) LXPageViewStyle style;
 @property (nonatomic, assign) NSInteger pageCount;
@@ -77,6 +78,7 @@ static const NSInteger kTag = 555;
         case LXPageViewStyleCircleRotate: {
             indicatorStyle = PageIndicatorViewStyleCircle;
         }
+            break;
         case LXPageViewStyleHollowCircleRotate: {
             indicatorStyle = PageIndicatorViewStyleHollowCircle;
         }
@@ -88,10 +90,11 @@ static const NSInteger kTag = 555;
         }
             break;
         case LXPageViewStyleCircleDragTail: {
-            indicatorStyle = PageIndicatorViewStyleHollowCircle;
+            indicatorStyle = PageIndicatorViewStyleCircle;
             currentStyle = PageIndicatorViewStyleCircle;
             self.needOneMore = YES;
         }
+            break;
         default:
             break;
     }
@@ -156,7 +159,7 @@ static const NSInteger kTag = 555;
         }
             break;
         case LXPageViewStyleCircleRotate: {
-
+            [self rotateAnimation];
         }
         case LXPageViewStyleHollowCircleRotate: {
 
@@ -187,21 +190,89 @@ static const NSInteger kTag = 555;
 - (void)hollowChangeCircelAnimation {
     
     LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
-    LXPageIndicatorView *currentIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
+    LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
     preIndicatorView.hollowCircleWidth = 0.5f;
-    currentIndicatorView.hollowCircleWidth = 2;
+    nowIndicatorView.hollowCircleWidth = 2;
 }
 
 - (void)circleExchangeAnimation {
     
-    LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(0 + kTag)];
-    LXPageIndicatorView *currentIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
+    LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
+    LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
     [UIView animateWithDuration:kAnimationDuration animations:^{
         CGFloat tempPoint = preIndicatorView.left;
-        preIndicatorView.left = currentIndicatorView.left;
-        currentIndicatorView.left = tempPoint;
+        preIndicatorView.left = nowIndicatorView.left;
+        nowIndicatorView.left = tempPoint;
     }];
+    NSInteger tempTag = preIndicatorView.tag;
+    preIndicatorView.tag = nowIndicatorView.tag;
+    nowIndicatorView.tag = tempTag;
 }
+
+- (void)rotateAnimation {
+    
+    
+    LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
+    LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
+    CGPoint currentCenter = CGPointMake(nowIndicatorView.center.x /2 + preIndicatorView.center.x / 2,preIndicatorView.center.y);
+    CGFloat radius = nowIndicatorView.left - preIndicatorView.right;
+//    CGFloat radius = 5;
+    [self upCircleAnimation:preIndicatorView path:currentCenter radius:radius];
+    [self downCircleAnimation:nowIndicatorView path:currentCenter radius:radius];
+    NSInteger tempTag = preIndicatorView.tag;
+    preIndicatorView.tag = nowIndicatorView.tag;
+    nowIndicatorView.tag = tempTag;
+}
+
+- (void)upCircleAnimation:(LXPageIndicatorView *)indicatoer path:(CGPoint)point radius:(CGFloat)radius {
+    
+    UIBezierPath *path = [UIBezierPath bezierPathWithArcCenter:point
+                                                        radius:radius
+                                                    startAngle:degreesToRadians(180)
+                                                      endAngle:degreesToRadians(0)
+                                                     clockwise:NO];
+    
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"position"];
+    animation.calculationMode = kCAAnimationPaced;
+    animation.fillMode = kCAFillModeForwards;
+    animation.removedOnCompletion = NO;
+    animation.duration = 2 * kAnimationDuration;
+    animation.path = path.CGPath;
+    NSString *animationName = [NSString stringWithFormat:@"upAn+%ld",(long)indicatoer.tag];
+    [indicatoer.layer addAnimation:animation forKey:animationName];
+    
+    
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    indicatoer.layer.position = CGPointMake(point.x + radius, point.y);
+    [CATransaction commit];
+}
+
+- (void)downCircleAnimation:(LXPageIndicatorView *)indicatoer path:(CGPoint)point radius:(CGFloat)radius {
+    
+    UIBezierPath *path = [UIBezierPath bezierPathWithArcCenter:point
+                                                        radius:radius
+                                                    startAngle:degreesToRadians(0)
+                                                      endAngle:degreesToRadians(180)
+                                                     clockwise:NO];
+    
+    CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"position"];
+    animation.calculationMode = kCAAnimationPaced;
+    animation.fillMode = kCAFillModeForwards;
+    animation.removedOnCompletion = NO;
+    animation.duration = 2 * kAnimationDuration;
+    animation.path = path.CGPath;
+    NSString *animationName = [NSString stringWithFormat:@"downAn+%ld",(long)indicatoer.tag];
+    [indicatoer.layer addAnimation:animation forKey:animationName];
+    
+    
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    indicatoer.layer.position = point;
+    [CATransaction commit];
+}
+
+#pragma mark - Other Method
 
 - (CGFloat)currentLeftPoint:(NSInteger)index {
     

@@ -42,7 +42,7 @@
     self.pageView3 = [[LXPageView alloc] initWithFrame:CGRectMake(160, 20.f, 80.f, 60.f) style:LXPageViewStyleHollowCircleMove pageCount:4];
     [bgView addSubview:self.pageView3];
     
-    self.pageView4 = [[LXPageView alloc] initWithFrame:CGRectMake(240, 20.f, 80.f, 60.f) style:LXPageViewStyleHollowCircleToDisc pageCount:4];
+    self.pageView4 = [[LXPageView alloc] initWithFrame:CGRectMake(240, 20.f, 80.f, 60.f) style:LXPageViewStyleCircleRotate pageCount:4];
     [bgView addSubview:self.pageView4];
 //    
 //    self.pageView5 = [[LXPageView alloc] initWithFrame:CGRectMake(0, 20.f, 80.f, 60.f) style:LXPageViewStyleHollowCircle pageCount:4];
