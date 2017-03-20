@@ -211,14 +211,19 @@ static const NSInteger kTag = 555;
 
 - (void)rotateAnimation {
     
-    
     LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
     LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
-    CGPoint currentCenter = CGPointMake(nowIndicatorView.center.x /2 + preIndicatorView.center.x / 2,preIndicatorView.center.y);
-    CGFloat radius = nowIndicatorView.left - preIndicatorView.right;
-//    CGFloat radius = 5;
-    [self upCircleAnimation:preIndicatorView path:currentCenter radius:radius];
-    [self downCircleAnimation:nowIndicatorView path:currentCenter radius:radius];
+    CGPoint currentCenter = CGPointMake(nowIndicatorView.center.x / 2.f + preIndicatorView.center.x / 2.f, preIndicatorView.center.y);
+    
+    CGFloat del = (nowIndicatorView.center.x - preIndicatorView.center.x) / 2;
+    CGFloat radius = del > 0 ? del : -del;
+    if (self.currentPage == 0 && self.prePage == self.pageCount - 1) {
+        [self upCircleAnimation:nowIndicatorView path:currentCenter radius:radius];
+        [self downCircleAnimation:preIndicatorView path:currentCenter radius:radius];
+    } else {
+        [self upCircleAnimation:preIndicatorView path:currentCenter radius:radius];
+        [self downCircleAnimation:nowIndicatorView path:currentCenter radius:radius];
+    }
     NSInteger tempTag = preIndicatorView.tag;
     preIndicatorView.tag = nowIndicatorView.tag;
     nowIndicatorView.tag = tempTag;
@@ -235,13 +240,11 @@ static const NSInteger kTag = 555;
     CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"position"];
     animation.calculationMode = kCAAnimationPaced;
     animation.fillMode = kCAFillModeForwards;
-    animation.removedOnCompletion = NO;
+    animation.removedOnCompletion = YES;
     animation.duration = 2 * kAnimationDuration;
     animation.path = path.CGPath;
     NSString *animationName = [NSString stringWithFormat:@"upAn+%ld",(long)indicatoer.tag];
     [indicatoer.layer addAnimation:animation forKey:animationName];
-    
-    
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
     indicatoer.layer.position = CGPointMake(point.x + radius, point.y);
@@ -262,13 +265,12 @@ static const NSInteger kTag = 555;
     animation.removedOnCompletion = NO;
     animation.duration = 2 * kAnimationDuration;
     animation.path = path.CGPath;
+    animation.removedOnCompletion = YES;
     NSString *animationName = [NSString stringWithFormat:@"downAn+%ld",(long)indicatoer.tag];
     [indicatoer.layer addAnimation:animation forKey:animationName];
-    
-    
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    indicatoer.layer.position = point;
+    indicatoer.layer.position = CGPointMake(point.x - radius, point.y);
     [CATransaction commit];
 }
 

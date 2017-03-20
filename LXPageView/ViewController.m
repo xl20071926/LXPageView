@@ -64,7 +64,7 @@
 
 - (void)onButtonClick {
     
-    NSLog(@"Change");
+    NSLog(@"》》》》》》》》》》》 Change 》》》》》》》》》》》》》》》 \n");
     [self changePage:self.pageView1];
     [self changePage:self.pageView2];
     [self changePage:self.pageView3];
