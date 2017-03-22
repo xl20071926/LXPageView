@@ -10,7 +10,7 @@
 #import "UIView+Extensions.h"
 #import "LXPageIndicatorView.h"
 
-static const CGFloat kIndicatorViewSize = 6.f;
+static const CGFloat kIndicatorViewSize = 10.f;
 static const CGFloat kIndicatorViewSpace = 5.f;
 static const CGFloat kAnimationDuration = 0.6;
 static const NSInteger kTag = 555;
@@ -102,15 +102,23 @@ static const NSInteger kTag = 555;
     CGFloat kPageIndicatorTop = (self.height - kIndicatorViewSize) / 2;
     for (int i = 0; i < self.pageCount; i++) {
         CGFloat currentLeft = [self currentLeftPoint:i];
-        LXPageIndicatorView *indicator = [[LXPageIndicatorView alloc] initWithFrame:CGRectMake(currentLeft, kPageIndicatorTop, kIndicatorViewSize, kIndicatorViewSize)
-                                                                     indicatorStyle:indicatorStyle];
+        
+        LXPageIndicatorView *indicator;
+        if (self.style == LXPageViewStyleHollowCircleToDisc || self.style == LXPageViewStyleHollowCircleRotate) {
+            indicator = [[LXPageIndicatorView alloc] initWithFrame:CGRectMake(currentLeft, kPageIndicatorTop, kIndicatorViewSize, kIndicatorViewSize)
+                                                    indicatorStyle:indicatorStyle
+                                                   unSelectedColor:[UIColor whiteColor]
+                                                     selectedColor:[UIColor whiteColor]];
+        } else {
+            indicator = [[LXPageIndicatorView alloc] initWithFrame:CGRectMake(currentLeft, kPageIndicatorTop, kIndicatorViewSize, kIndicatorViewSize)
+                                                     indicatorStyle:indicatorStyle];
+        }
         indicator.tag = kTag + i;
         [self addSubview:indicator];
         if (!self.needOneMore && i == 0) {
             indicator.isSelected = YES;
         }
     }
-    
     if (!self.currentIndicatorView && self.needOneMore) {
         self.currentIndicatorView = [[LXPageIndicatorView alloc] initWithFrame:CGRectMake([self currentLeftPoint:0], kPageIndicatorTop, kIndicatorViewSize, kIndicatorViewSize)
                                                                 indicatorStyle:currentStyle];
@@ -150,7 +158,7 @@ static const NSInteger kTag = 555;
         case LXPageViewStyleHollowCircleMove:
             [self removeIndicatorViewAnimation];
             break;
-        case LXPageViewStyleHollowCircleToDisc: {
+        case LXPageViewStyleHollowCircleToDisc: {;
             [self hollowChangeCircelAnimation];
         }
             break;
@@ -161,17 +169,19 @@ static const NSInteger kTag = 555;
         case LXPageViewStyleCircleRotate: {
             [self rotateAnimation];
         }
+            break;
         case LXPageViewStyleHollowCircleRotate: {
-
+            [self rotateAnimation];
         }
             break;
         case LXPageViewStyleCircleDrag: {
-
+            [self dragAnimation];
         }
             break;
         case LXPageViewStyleCircleDragTail: {
 
         }
+            break;
         default:
             break;
     }
@@ -180,22 +190,29 @@ static const NSInteger kTag = 555;
 
 #pragma mark - Animation method
 
-- (void)removeIndicatorViewAnimation {
+- (void)removeIndicatorViewAnimation { // 位移
     
     [UIView animateWithDuration:kAnimationDuration animations:^{
         self.currentIndicatorView.left = [self currentLeftPoint:self.currentPage];
     }];
 }
 
-- (void)hollowChangeCircelAnimation {
+- (void)hollowChangeCircelAnimation { // 空心变圆心
     
     LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
     LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
-    preIndicatorView.hollowCircleWidth = 0.5f;
-    nowIndicatorView.hollowCircleWidth = 2;
+    [nowIndicatorView hollowToCircleAnimation];
+    [preIndicatorView circelToHollowAnimation];
 }
 
-- (void)circleExchangeAnimation {
+- (void)dragAnimation {
+    
+    if (self.currentIndicatorView) {
+        
+    }
+}
+
+- (void)circleExchangeAnimation { // 换位
     
     LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
     LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
@@ -209,14 +226,14 @@ static const NSInteger kTag = 555;
     nowIndicatorView.tag = tempTag;
 }
 
-- (void)rotateAnimation {
+- (void)rotateAnimation { // 旋转
     
     LXPageIndicatorView *preIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.prePage + kTag)];
     LXPageIndicatorView *nowIndicatorView = (LXPageIndicatorView *)[self viewWithTag:(self.currentPage + kTag)];
     CGPoint currentCenter = CGPointMake(nowIndicatorView.center.x / 2.f + preIndicatorView.center.x / 2.f, preIndicatorView.center.y);
     
-    CGFloat del = (nowIndicatorView.center.x - preIndicatorView.center.x) / 2;
-    CGFloat radius = del > 0 ? del : -del;
+    CGFloat distance = (nowIndicatorView.center.x - preIndicatorView.center.x) / 2;
+    CGFloat radius = distance > 0 ? distance : -distance;
     if (self.currentPage == 0 && self.prePage == self.pageCount - 1) {
         [self upCircleAnimation:nowIndicatorView path:currentCenter radius:radius];
         [self downCircleAnimation:preIndicatorView path:currentCenter radius:radius];
@@ -262,10 +279,9 @@ static const NSInteger kTag = 555;
     CAKeyframeAnimation *animation = [CAKeyframeAnimation animationWithKeyPath:@"position"];
     animation.calculationMode = kCAAnimationPaced;
     animation.fillMode = kCAFillModeForwards;
-    animation.removedOnCompletion = NO;
+    animation.removedOnCompletion = YES;
     animation.duration = 2 * kAnimationDuration;
     animation.path = path.CGPath;
-    animation.removedOnCompletion = YES;
     NSString *animationName = [NSString stringWithFormat:@"downAn+%ld",(long)indicatoer.tag];
     [indicatoer.layer addAnimation:animation forKey:animationName];
     [CATransaction begin];

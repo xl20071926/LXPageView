@@ -22,6 +22,15 @@ typedef NS_ENUM(NSInteger, PageIndicatorViewStyle) {
 @property (nonatomic, strong) UIColor *unSelectedColor; // 未选中颜色
 @property (nonatomic, assign) CGFloat hollowCircleWidth; // 空心圆的线宽
 
-- (instancetype)initWithFrame:(CGRect)frame indicatorStyle:(PageIndicatorViewStyle)style;
+- (instancetype)initWithFrame:(CGRect)frame
+               indicatorStyle:(PageIndicatorViewStyle)style;
+
+- (instancetype)initWithFrame:(CGRect)frame
+               indicatorStyle:(PageIndicatorViewStyle)style
+              unSelectedColor:(UIColor *)unSelectedColor
+                selectedColor:(UIColor *)selectedColor;
+
+- (void)hollowToCircleAnimation;
+- (void)circelToHollowAnimation;
 
 @end
