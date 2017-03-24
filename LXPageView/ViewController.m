@@ -63,8 +63,6 @@
     self.pageView8 = [[LXPageView alloc] initWithFrame:CGRectMake(240, 20.f, 80.f, 60.f) style:LXPageViewStyleHollowCircleRotate pageCount:4];
     [bgViewRed addSubview:self.pageView8];
     
-    
-    
     UIButton *changeButton = [UIButton buttonWithType:UIButtonTypeCustom];
     changeButton.frame = CGRectMake(60.f, bgViewRed.bottom + 20.f, self.view.width - 120.f, 30.f);
     [changeButton setTitle:@"Change" forState:UIControlStateNormal];
@@ -76,7 +74,6 @@
 
 - (void)onButtonClick {
     
-    NSLog(@"》》》》》》》》》》》 Change 》》》》》》》》》》》》》》》 \n");
     [self changePage:self.pageView1];
     [self changePage:self.pageView2];
     [self changePage:self.pageView3];

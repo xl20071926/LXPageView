@@ -85,13 +85,13 @@ static const NSInteger kTag = 555;
             break;
         case LXPageViewStyleCircleDrag: {
             indicatorStyle = PageIndicatorViewStyleCircle;
-            currentStyle = PageIndicatorViewStyleCircle;
+            currentStyle = PageIndicatorViewStyleAnimationCircle;
             self.needOneMore = YES;
         }
             break;
         case LXPageViewStyleCircleDragTail: {
             indicatorStyle = PageIndicatorViewStyleCircle;
-            currentStyle = PageIndicatorViewStyleCircle;
+            currentStyle = PageIndicatorViewStyleAnimationRainDrop;
             self.needOneMore = YES;
         }
             break;
@@ -179,7 +179,7 @@ static const NSInteger kTag = 555;
         }
             break;
         case LXPageViewStyleCircleDragTail: {
-
+            [self rainDropAnimation];
         }
             break;
         default:
@@ -209,6 +209,23 @@ static const NSInteger kTag = 555;
     
     if (self.currentIndicatorView) {
         
+        __weak typeof(self) weakSelf = self;
+        CGFloat nextLeft = [self currentLeftPoint:self.currentPage];
+        [self.currentIndicatorView ovalCircleAnimationWithMoveDistance:nextLeft - self.currentIndicatorView.left fininshBlock:^{
+            weakSelf.currentIndicatorView.left = [weakSelf currentLeftPoint:weakSelf.currentPage];
+//            [weakSelf changePageSelectStatus];
+        }];
+    }
+}
+
+- (void)rainDropAnimation {
+    
+    if (self.currentIndicatorView) {
+        __weak typeof(self) weakSelf = self;
+        CGFloat nextLeft = [self currentLeftPoint:self.currentPage];
+        [self.currentIndicatorView rainDropAnimationWithDistance:nextLeft - self.currentIndicatorView.left fininshBlock:^{
+            weakSelf.currentIndicatorView.left = [weakSelf currentLeftPoint:weakSelf.currentPage];
+        }];
     }
 }
 

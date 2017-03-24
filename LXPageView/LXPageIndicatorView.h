@@ -13,6 +13,8 @@ typedef NS_ENUM(NSInteger, PageIndicatorViewStyle) {
     PageIndicatorViewStyleLine,
     PageIndicatorViewStyleCircle,
     PageIndicatorViewStyleHollowCircle,
+    PageIndicatorViewStyleAnimationCircle,
+    PageIndicatorViewStyleAnimationRainDrop,
 };
 
 @interface LXPageIndicatorView : UIView
@@ -32,5 +34,7 @@ typedef NS_ENUM(NSInteger, PageIndicatorViewStyle) {
 
 - (void)hollowToCircleAnimation;
 - (void)circelToHollowAnimation;
+- (void)ovalCircleAnimationWithMoveDistance:(CGFloat)distance fininshBlock:(void(^)())fininshBlock;
+- (void)rainDropAnimationWithDistance:(CGFloat)distance fininshBlock:(void(^)())fininshBlock;
 
 @end

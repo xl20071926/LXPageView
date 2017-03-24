@@ -21,6 +21,15 @@ static const CGFloat kAnimationDuration = 1.f;
 @property (nonatomic, strong) CAShapeLayer *outerShapeLayer;
 @property (nonatomic, strong) CAShapeLayer *innerShapeLayer;
 
+@property (nonatomic, strong) NSTimer *headTimer;
+@property (nonatomic, strong) NSTimer *tailTiemr;
+
+@property (nonatomic, assign) CGFloat headFloat;
+@property (nonatomic, assign) CGFloat tailFloat;
+
+@property (nonatomic, assign) CGFloat ovalCircleMoveDistance;
+@property (nonatomic, copy) void(^ovalCircelMoveFinishBlock)();
+
 @end
 
 @implementation LXPageIndicatorView
@@ -54,16 +63,20 @@ static const CGFloat kAnimationDuration = 1.f;
     
     if (self.style == PageIndicatorViewStyleLine) {
         [self drawLine];
+    } else if (self.style == PageIndicatorViewStyleAnimationCircle) {
+        [self drawCircel];
+    } else if (self.style == PageIndicatorViewStyleAnimationRainDrop) {
+        [self drawCircel];
     } else {
-        [self drawCircle];
+        [self drawCircleWithMask];
     }
 }
 
 - (void)drawLine {
     
-    UIBezierPath *path = [UIBezierPath bezierPathWithRect:CGRectMake(1.f, (self.height - kLineHeight) / 2, self.width - 2, kLineHeight)];
+    UIBezierPath *path = [UIBezierPath bezierPathWithRect:CGRectMake(1.f, (self.height - kLineHeight) / 2, self.height - 2, kLineHeight)];
     self.outerShapeLayer = [CAShapeLayer layer];
-    self.outerShapeLayer.frame = self.bounds;
+    self.outerShapeLayer.frame = CGRectMake(0, 0, self.height, self.height);//self.bounds;
     self.outerShapeLayer.path = path.CGPath;
     if (self.isSelected) {
         self.outerShapeLayer.fillColor = self.selectedColor.CGColor;
@@ -73,35 +86,85 @@ static const CGFloat kAnimationDuration = 1.f;
     [self.layer addSublayer:self.outerShapeLayer];
 }
 
-- (void)drawCircle {
+- (void)drawCircleWithMask {
     
     if (self.isSelected) {
         self.outerShapeLayer.fillColor = self.selectedColor.CGColor;
     } else {
         self.outerShapeLayer.fillColor = self.unSelectedColor.CGColor;
     }
-    self.outerShapeLayer.path = [self getCirclePathWithRadius:self.width / 2].CGPath;
+    self.outerShapeLayer.path = [self getCirclePathWithRadius:self.height / 2].CGPath;
     [self.layer addSublayer:self.outerShapeLayer];
     
     self.innerShapeLayer.fillColor = [[UIColor clearColor] CGColor];
     self.innerShapeLayer.strokeColor = [[UIColor whiteColor] CGColor];
     if (self.style == PageIndicatorViewStyleCircle) {
-        [self.innerShapeLayer setLineWidth:self.width - 2];
+        [self.innerShapeLayer setLineWidth:self.height - 2];
     } else if (self.style == PageIndicatorViewStyleHollowCircle){
         [self.innerShapeLayer setLineWidth:1];
     }
-    self.innerShapeLayer.path = [self getCirclePathWithRadius:self.width / 2 - 1].CGPath;
+    self.innerShapeLayer.path = [self getCirclePathWithRadius:self.height / 2 - 1].CGPath;
     [self.outerShapeLayer setMask:self.innerShapeLayer];
+}
+
+- (void)drawCircel {
+    
+    if (self.isSelected) {
+        self.outerShapeLayer.fillColor = self.selectedColor.CGColor;
+    } else {
+        self.outerShapeLayer.fillColor = self.unSelectedColor.CGColor;
+    }
+    self.outerShapeLayer.path = [self getCirclePathWithRadius:self.height / 2].CGPath;
+    [self.layer addSublayer:self.outerShapeLayer];
 }
 
 - (UIBezierPath *)getCirclePathWithRadius:(CGFloat)radius {
     
     UIBezierPath *path = [UIBezierPath bezierPath];
-    [path addArcWithCenter:CGPointMake(self.width / 2, self.height / 2)
+    [path addArcWithCenter:CGPointMake(self.height / 2, self.height / 2)
                     radius:radius
                 startAngle:degreesToRadians(0)
                   endAngle:degreesToRadians(360)
                  clockwise:NO];
+    return path;
+}
+
+- (UIBezierPath *)getOvalCirclePathWithTailDis:(CGFloat)tailDis headDis:(CGFloat)headDis {
+    
+    CGFloat size = self.width;
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    [path moveToPoint:CGPointMake(size / 2 + tailDis, 0)];
+    [path addCurveToPoint:CGPointMake(size / 2 + tailDis, size)
+            controlPoint1:CGPointMake(size / 2 + tailDis - 4 / 3.0 * size / 2, 0)
+            controlPoint2:CGPointMake(size / 2 + tailDis - 4 / 3.0 * size / 2, size)];
+    [path addLineToPoint:CGPointMake(size / 2 + headDis, size)];
+    [path addCurveToPoint:CGPointMake(size / 2 + headDis, 0)
+            controlPoint1:CGPointMake(size / 2 + headDis + 4 / 3.0 * size / 2, size)
+            controlPoint2:CGPointMake(size / 2 + headDis + 4 / 3.0 * size / 2, 0)];
+    [path closePath];
+    
+    return path;
+}
+
+- (UIBezierPath *)getOvalCirclePathWithWidth:(CGFloat)aWidth headSize:(CGFloat)headSize {
+    
+    CGFloat height = self.height;
+    CGFloat width = aWidth + self.width;
+    CGFloat cotrolPoint = 4;
+    UIBezierPath *path = [UIBezierPath bezierPath];
+    [path moveToPoint:CGPointMake(cotrolPoint, height / 2 - height / 6.f)];
+    
+    [path addQuadCurveToPoint:CGPointMake(cotrolPoint, height / 2 + height / 6.f)
+                 controlPoint:CGPointMake(headSize, height / 2)];
+    
+    [path addCurveToPoint:CGPointMake(width, height / 2)
+            controlPoint1:CGPointMake(cotrolPoint + width / 5, height / 2 + height / 5.f)
+            controlPoint2:CGPointMake(width, height / 2 + 2 / 3.0 * height)];
+    
+    [path addCurveToPoint:CGPointMake(cotrolPoint, height / 2 - height / 6.f)
+            controlPoint1:CGPointMake(width, height / 2 - 2 / 3.0 * height )
+            controlPoint2:CGPointMake(cotrolPoint + width / 5, height / 2 - height / 5.f)];
+    
     return path;
 }
 
@@ -123,6 +186,115 @@ static const CGFloat kAnimationDuration = 1.f;
     [CATransaction commit];
 }
 
+- (void)ovalCircleAnimationWithMoveDistance:(CGFloat)distance fininshBlock:(void(^)())fininshBlock {
+    
+    if (self.headTimer || self.tailTiemr) return;
+    self.ovalCircleMoveDistance = distance;
+    self.ovalCircelMoveFinishBlock = fininshBlock;
+    self.headFloat = 0;
+    self.tailFloat = 0;
+
+    self.headTimer = [NSTimer scheduledTimerWithTimeInterval:0.03
+                                                      target:self
+                                                    selector:@selector(headMoveMethod)
+                                                    userInfo:nil
+                                                     repeats:YES];
+}
+
+- (void)rainDropAnimationWithDistance:(CGFloat)distance fininshBlock:(void(^)())fininshBlock {
+    
+    if (self.headTimer || self.tailTiemr) return;
+    self.ovalCircelMoveFinishBlock = fininshBlock;
+    self.ovalCircleMoveDistance = distance;
+    self.headFloat = 0;
+    self.tailFloat = 0;
+    
+    self.headTimer = [NSTimer scheduledTimerWithTimeInterval:0.03
+                                                      target:self
+                                                    selector:@selector(rainHead)
+                                                    userInfo:nil
+                                                     repeats:YES];
+}
+
+- (void)rainHead {
+    
+    if (self.headFloat > self.ovalCircleMoveDistance) {
+        [self.headTimer invalidate];
+        self.headTimer = nil;
+        [self stareRainTail];
+        return;
+    }
+    self.headFloat += 1.0;
+    self.outerShapeLayer.path = [self getOvalCirclePathWithWidth:self.headFloat headSize:self.tailFloat].CGPath;
+}
+
+- (void)stareRainTail {
+ 
+    self.tailTiemr = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                      target:self
+                                                    selector:@selector(rainTail)
+                                                    userInfo:nil
+                                                     repeats:YES];
+}
+
+- (void)rainTail {
+    
+    if (self.tailFloat > 4) {
+        [self.tailTiemr invalidate];
+        self.tailTiemr = nil;
+        self.outerShapeLayer.path = [self getCirclePathWithRadius:self.height / 2].CGPath;
+        self.tailFloat = 0;
+        self.headFloat = 0;
+        if (self.ovalCircelMoveFinishBlock) {
+            self.ovalCircelMoveFinishBlock();
+        }
+        return;
+    }
+    self.tailFloat += 1.0;
+    self.outerShapeLayer.path = [self getOvalCirclePathWithWidth:self.headFloat
+                                                        headSize:self.tailFloat].CGPath;
+}
+
+- (void)headMoveMethod {
+    
+    if (self.headFloat > self.ovalCircleMoveDistance - 1) {
+        [self.headTimer invalidate];
+        self.headTimer = nil;
+        [self stareTailDisMoveMethod];
+        return;
+    }
+    self.headFloat += 1.0;
+    self.outerShapeLayer.path = [self getOvalCirclePathWithTailDis:0
+                                                           headDis:self.headFloat].CGPath;
+}
+
+- (void)stareTailDisMoveMethod {
+    
+    self.tailTiemr = [NSTimer scheduledTimerWithTimeInterval:0.01
+                                                     target:self
+                                                   selector:@selector(tailMoveMethod)
+                                                   userInfo:nil
+                                                    repeats:YES];
+}
+
+- (void)tailMoveMethod {
+    
+    if (self.tailFloat > self.ovalCircleMoveDistance - 1) {
+        [self.tailTiemr invalidate];
+        self.tailTiemr = nil;
+        self.outerShapeLayer.path = [self getCirclePathWithRadius:self.height / 2].CGPath;
+        self.tailFloat = 0;
+        self.headFloat = 0;
+        if (self.ovalCircelMoveFinishBlock) {
+            self.ovalCircelMoveFinishBlock();
+        }
+        return;
+    }
+    self.tailFloat += 1.0;
+    self.outerShapeLayer.path = [self getOvalCirclePathWithTailDis:self.tailFloat
+                                                           headDis:self.headFloat].CGPath;
+}
+
 // ------------以下代码暂时不使用 ----------------------------------------------
 
 - (void)drawRect:(CGRect)rect {
@@ -140,8 +312,8 @@ static const CGFloat kAnimationDuration = 1.f;
 - (void)drawLine:(CGContextRef)context rect:(CGRect)rect { // 直线
     
     CGContextMoveToPoint(context, 0, (self.height - kLineHeight) / 2);
-    CGContextAddLineToPoint(context, self.width, (self.height - kLineHeight) / 2);
-    CGContextAddLineToPoint(context, self.width, (self.height - kLineHeight) / 2 + kLineHeight);
+    CGContextAddLineToPoint(context, self.height, (self.height - kLineHeight) / 2);
+    CGContextAddLineToPoint(context, self.height, (self.height - kLineHeight) / 2 + kLineHeight);
     CGContextAddLineToPoint(context, 0, (self.height - kLineHeight) / 2 + kLineHeight);
     CGContextSetLineWidth(context, kLineWidth);
     CGColorRef currentColor = self.isSelected ? self.selectedColor.CGColor : self.unSelectedColor.CGColor;
@@ -152,8 +324,8 @@ static const CGFloat kAnimationDuration = 1.f;
 
 - (void)drawCircle:(CGContextRef)context rect:(CGRect)rect { // 实心圆
     
-    CGContextMoveToPoint(context, self.width, self.height / 2);
-    CGContextAddArc(context, self.width / 2, self.height / 2, self.width / 2, degreesToRadians(0), degreesToRadians(360), NO);
+    CGContextMoveToPoint(context, self.height, self.height / 2);
+    CGContextAddArc(context, self.height / 2, self.height / 2, self.height / 2, degreesToRadians(0), degreesToRadians(360), NO);
     CGContextSetLineWidth(context, kLineWidth);
     CGColorRef currentColor = self.isSelected ? self.selectedColor.CGColor : self.unSelectedColor.CGColor;
     CGContextSetStrokeColorWithColor(context, currentColor);
@@ -165,7 +337,7 @@ static const CGFloat kAnimationDuration = 1.f;
 
     CGContextSetFillColorWithColor(context, [UIColor clearColor].CGColor);
     CGContextFillRect(context, rect);
-    CGContextAddEllipseInRect(context, CGRectMake(self.hollowCircleWidth, self.hollowCircleWidth, self.width - 2 * self.hollowCircleWidth, self.height - 2 * self.hollowCircleWidth));
+    CGContextAddEllipseInRect(context, CGRectMake(self.hollowCircleWidth, self.hollowCircleWidth, self.height - 2 * self.hollowCircleWidth, self.height - 2 * self.hollowCircleWidth));
     CGColorRef currentColor = self.isSelected ? self.selectedColor.CGColor : self.unSelectedColor.CGColor;
     CGContextSetStrokeColorWithColor(context, currentColor);
     CGContextSetLineWidth(context, self.hollowCircleWidth);
@@ -209,7 +381,7 @@ static const CGFloat kAnimationDuration = 1.f;
     if (isSelected) {
         self.outerShapeLayer.fillColor = [UIColor whiteColor].CGColor;
         if (self.innerShapeLayer) {
-            [self.innerShapeLayer setLineWidth:self.width - 2];
+            [self.innerShapeLayer setLineWidth:self.height - 2];
         }
     } else {
         self.outerShapeLayer.fillColor = [UIColor colorWithHex:0xffffff alpha:0.5].CGColor;
@@ -222,7 +394,7 @@ static const CGFloat kAnimationDuration = 1.f;
     
     if (!_outerShapeLayer) {
         _outerShapeLayer = [CAShapeLayer layer];
-        _outerShapeLayer.frame = self.bounds;
+        _outerShapeLayer.frame =  CGRectMake(0, 0, self.height, self.height);//self.bounds;
     }
     return _outerShapeLayer;
 }
@@ -231,7 +403,7 @@ static const CGFloat kAnimationDuration = 1.f;
     
     if (!_innerShapeLayer) {
         _innerShapeLayer = [CAShapeLayer layer];
-        _innerShapeLayer.frame = self.bounds;
+        _innerShapeLayer.frame =  CGRectMake(0, 0, self.height, self.height);//self.bounds;
     }
     return _innerShapeLayer;
 }
